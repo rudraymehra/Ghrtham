@@ -1,214 +1,192 @@
 # System Design Document
 ## AI-Powered Physiotherapy Web Application
 
+**Team Name:** Ghrtham
+**Team Leader:** Rudray Mehra
+**Hackathon:** AI for Bharat Hackathon (Powered by AWS)
+**Problem Statement:** Design an AI solution that improves efficiency, understanding, or support within healthcare or life-sciences ecosystems.
+
 ---
 
 ## 1. Design Overview
 
-This document describes the system design and architecture of an AI-powered physiotherapy web application that enables patients to perform physiotherapy exercises remotely using a webcam. The system performs real-time pose estimation in the browser and post-session analysis using temporal deep learning techniques, then generates performance summaries for physiotherapists.
+This document describes the system design and architecture of an AI-powered physiotherapy web application that enables patients to perform prescribed physiotherapy exercises remotely using a standard webcam. The system uses computer vision and deep learning to analyze a patient's body posture and movements during an exercise session.
 
-The design focuses on a browser-first ML approach, modularity, scalability, privacy, and ease of integration with clinical workflows. The initial domain focus is post-surgical joint replacement (TKA/THA) and general orthopedic rehabilitation, where standardized protocols and clear range-of-motion goals make pose-based assessment highly suitable.
+Instead of requiring real-time supervision, the platform performs **post-session analysis**, where body pose data is processed using a temporal neural network (LSTM) to classify exercises, evaluate execution quality, detect common posture errors, and generate a performance score. A detailed summary report is then shared with the physiotherapist, allowing them to monitor progress and intervene only when necessary.
 
-
-
----
-
-## 7. Security Design
-
-- Role-based access control (RBAC) for patients, physiotherapists, and administrators.
-- JWT-based authentication integrated with secure user management.
-- Encrypted data transmission using HTTPS (TLS 1.2+).
-- Encryption at rest for databases and object storage.
-- Consent-based storage of sensitive data, with explicit control over video retention.
-- Limited and configurable retention of raw video data; preference for pose/feature storage.
-- Audit logging for all access to and modification of patient-related data.
+This approach helps bridge the gap between the growing number of physiotherapy patients and limited healthcare professionals, improving accessibility, scalability, and consistency in rehabilitation care while maintaining medical oversight.
 
 ---
 
-## 8. Scalability & Deployment Design
+## 2. How It Differs From Existing Solutions
 
-- Modular microservice-oriented architecture.
-- Containerized deployment using Docker.
-- Independent scaling of AI/ML services.
-- Browser-first inference for pose estimation to offload real-time compute from the backend.
-- Cloud-based object storage for large data (e.g., occasional raw videos, model artifacts).
-
----
-
-## 9. Error Handling & Reliability
-
-- Graceful handling of webcam or pose detection failures.
-- Retry mechanisms for AI service calls.
-- Centralized logging and monitoring.
+- Works **entirely through a web browser** using a standard webcam (no wearables).
+- Focuses on **post-session AI analysis** rather than fragile real-time feedback.
+- Provides **objective, data-driven performance scoring** instead of subjective observation.
+- Generates **automated reports for doctors**, reducing their manual workload.
 
 ---
 
-## 10. Design Constraints
+## 3. USP of the Proposed Solution
 
-- Web-based execution limits real-time processing.
-- Initial system supports a limited set of exercises.
-- AI predictions assist but do not replace medical expertise.
-
----
-
-## 11. Future Enhancements
-
-- Real-time corrective feedback.
-- Transformer-based temporal models.
-- Wearable sensor integration.
-- Mobile application support.
+- **No additional hardware required** -- works with a standard webcam.
+- **Post-session AI analysis** ensures higher accuracy and reliability.
+- **Objective performance scoring** based on movement data.
+- **Doctor-centric reporting**, not just patient-facing feedback.
+- **Scalable and cost-effective** solution for large patient populations.
+- **Assistive AI** that supports physiotherapists rather than replacing them.
 
 ---
 
-## 12. Conclusion
+## 4. High-Level Architecture
 
-This design outlines a scalable, secure, and modular architecture for an AI-powered physiotherapy system that leverages pose estimation and deep learning to enhance remote rehabilitation while maintaining clinical oversight.
-
----
-
-## 2. High-Level Architecture
-
+```
 +-----------------------------+
-| Web Browser (Next.js App)  |
-| - Webcam + UI              |
-| - TF.js MoveNet + features |
-| - Rep/ROM logic            |
+| Web Browser (React.js)     |
+| - Webcam + WebRTC          |
+| - TF.js MoveNet (Pose)    |
 +--------------+--------------+
                |
-               | HTTPS / REST / WebSockets
+               | HTTPS / REST
                v
 +-----------------------------+
-| Backend Server (FastAPI)   |
-| - Auth & RBAC              |
+| Backend API (Spring Boot)  |
+| - Auth (AWS Cognito + JWT) |
 | - Sessions, Reports        |
-| - Background Jobs          |
 +--------------+--------------+
                |
-               | Async / REST / Workers
                v
 +-----------------------------+
-| Analytics / ML Services    |
-| - TCN-based analysis       |
-| - Aggregation, scoring     |
+| AI / ML Service            |
+| - Pose + LSTM              |
+| - AWS SageMaker            |
 +--------------+--------------+
                |
                v
 +-----------------------------+
 | Database & Storage         |
-| - PostgreSQL (JSONB)       |
-| - Object Storage (videos)  |
+| - Amazon RDS (PostgreSQL)  |
+| - Amazon S3                |
 +-----------------------------+
+```
+
+### ML Pipeline
+
+```
+Webcam Frames
+      |
+Pose Estimation (TensorFlow.js + MoveNet)
+      |
+Feature Extraction
+      |
+LSTM Model (AWS SageMaker)
+      |
+Predictions & Scores
+```
 
 ---
 
-## 3. Component Design
+## 5. Component Design
 
-### 3.1 Frontend (Web Application)
+### 5.1 Frontend (Web Application)
+
+**Technology:** React.js + WebRTC
 
 **Responsibilities:**
-- Access webcam using browser APIs.
+- Access webcam using WebRTC browser APIs.
 - Capture physiotherapy session data.
-- Perform pose estimation on video frames using TensorFlow.js (e.g., MoveNet Thunder/Lightning).
-- Perform lightweight feature extraction (angles, distances) and rep/ROM logic in the browser.
-- Use Web Workers (with OffscreenCanvas where available) to keep ML inference off the main UI thread.
-- Upload pose data and/or derived features for post-session analysis.
-- Display exercise instructions, real-time feedback, and dashboards for reports and analytics.
+- Perform pose estimation on video frames using TensorFlow.js + MoveNet to extract body keypoints directly in the browser.
+- Upload pose data for post-session analysis.
+- Display guided exercise videos/instructions.
+- Display dashboards for reports and analytics.
 
 **Key Modules:**
 - Authentication Module
-- Session Recorder
-- Pose Estimation Engine
-- Patient Dashboard
-- Doctor Dashboard
+- Session Recorder (WebRTC-based)
+- Pose Estimation Engine (TensorFlow.js + MoveNet)
+- Patient Dashboard (feedback, trends, session history)
+- Doctor Dashboard (reports, analytics, alerts)
 
 ---
 
-### 3.2 Backend Services
+### 5.2 Backend Services
+
+**Technology:** Spring Boot deployed on AWS EC2 / ECS
 
 **Responsibilities:**
-- User authentication and role-based authorization.
+- User authentication and role-based authorization (AWS Cognito + JWT).
 - Manage physiotherapy sessions.
 - Coordinate AI analysis workflows.
 - Store and retrieve reports.
-- Trigger notifications to doctors.
+- Trigger notifications and risk alerts to doctors.
 
 **Core Services:**
-- Authentication Service
+- Authentication Service (AWS Cognito)
 - Session Management Service
-- Report Service
-- Notification Service
+- Report Generation Service
+- Notification / Alert Service
 
 ---
 
-### 3.3 AI / Machine Learning Service
+### 5.3 AI / Machine Learning Service
+
+**Technology:** Python + PyTorch/TensorFlow, LSTM models on AWS SageMaker
 
 **Responsibilities:**
 - Analyze temporal pose data from sessions.
 - Classify physiotherapy exercises.
 - Score exercise execution quality.
-- Detect incorrect postures and movements.
+- Detect incorrect postures and risky movements.
 
 **Model Architecture:**
-- Pose Estimation: MoveNet (Thunder/Lightning) via TensorFlow.js in the browser (primary), with optional server-side batch processing if needed.
-- Feature Engineering: Joint angles, distances, velocities, normalized by torso length and orientation.
-- Temporal Model: Temporal Convolutional Network (TCN) for sequence modeling and exercise classification.
-- Scoring: Combination of model outputs and rule-based/DTW-style alignment against reference patterns.
-- Output:
+- **Pose Estimation:** TensorFlow.js + MoveNet -- extracts body keypoints directly in the browser.
+- **Feature Engineering:** Joint angles, distances, velocities derived from keypoints.
+- **Temporal Model:** LSTM (Long Short-Term Memory) network for session-level posture analysis and performance scoring.
+- **Output:**
   - Exercise classification
-  - Quality score (0–100) and key metrics (ROM, control, tempo)
-  - Error classification (optional)
+  - Quality/performance score
+  - Posture error detection
 
 ---
 
-## 4. Data Flow Design
+## 6. Data Flow Design
 
-### 4.1 Session Execution Flow
+### 6.1 Session Execution Flow
 
-Patient logs in
-
-Selects prescribed exercise
-
-Webcam captures video frames
-
-Pose keypoints extracted per frame
-
-Pose sequence uploaded to backend
-
-AI service performs post-session analysis
-
-Performance report generated
-
-Doctor notified
-
-yaml
-Copy code
+1. Patient logs in
+2. Selects prescribed exercise
+3. Guided video plays; webcam captures frames via WebRTC
+4. Pose keypoints extracted per frame (TensorFlow.js + MoveNet in browser)
+5. Pose sequence uploaded to backend
+6. AI service (LSTM on SageMaker) performs post-session analysis
+7. Performance report generated
+8. Doctor notified / report available on clinician dashboard
 
 ---
 
-### 4.2 Pose Data Processing Pipeline
+### 6.2 Pose Data Processing Pipeline
 
+```
 Webcam Frame
-|
-Pose Estimation
-|
+      |
+Pose Estimation (MoveNet)
+      |
 Keypoints (x, y, confidence)
-|
+      |
 Feature Engineering
-|
+      |
 Temporal Pose Sequence
-|
+      |
 LSTM Model
-|
+      |
 Predictions & Scores
-
-yaml
-Copy code
+```
 
 ---
 
-## 5. Machine Learning Design
+## 7. Machine Learning Design
 
-### 5.1 Feature Engineering
+### 7.1 Feature Engineering
 
 The following features are derived from pose keypoints:
 - Joint angles (knee, elbow, hip, shoulder)
@@ -218,34 +196,31 @@ The following features are derived from pose keypoints:
 
 ---
 
-### 5.2 Model Input & Output
+### 7.2 Model Input & Output
 
 **Input Shape:**
-(batch_size, time_steps, feature_dimension)
-
-yaml
-Copy code
+`(batch_size, time_steps, feature_dimension)`
 
 **Outputs:**
 - Exercise label (classification)
 - Performance score (regression)
-- Error type (optional classification)
+- Error type (posture error classification)
 
 ---
 
-### 5.3 Training Pipeline
+### 7.3 Training Pipeline
 
 - Collection of physiotherapy exercise datasets.
 - Pose extraction and normalization.
 - Data augmentation (noise injection, temporal scaling).
-- Supervised training of LSTM model.
+- Supervised training of LSTM model on AWS SageMaker.
 - Model validation and periodic retraining.
 
 ---
 
-## 6. Database Design
+## 8. Database Design
 
-### 6.1 Core Entities
+### 8.1 Core Entities
 
 - User
 - Session
@@ -255,10 +230,78 @@ Copy code
 
 ---
 
-### 6.2 Simplified Schema
+### 8.2 Simplified Schema
 
+```
 User(id, name, email, role)
 Session(id, user_id, exercise_id, timestamp)
 PoseData(session_id, frame_no, keypoints)
 Report(id, session_id, score, summary)
 Exercise(id, name, description)
+```
+
+**Storage:**
+- **Amazon RDS (PostgreSQL):** User data, medical records, session metadata, reports.
+- **Amazon S3:** Pose/session data, model artifacts.
+
+---
+
+## 9. Security Design
+
+- Role-based access control (RBAC) for patients, physiotherapists, and administrators.
+- Authentication via **AWS Cognito + JWT**.
+- Encrypted data transmission using **HTTPS**.
+- Secure role-based access for doctors and patients.
+- Encryption at rest for databases and object storage.
+- Audit logging for all access to patient-related data.
+
+---
+
+## 10. Scalability & Deployment Design
+
+- **Containerized deployment** using Docker.
+- Deployed on **AWS (ECS / EC2)** enabling scalable inference and application hosting.
+- Independent scaling of AI/ML services via **AWS SageMaker**.
+- Browser-first inference for pose estimation to offload real-time compute from the backend.
+- **Amazon S3** for large data storage (pose data, model artifacts).
+- Seamless scalability as user volume grows.
+
+---
+
+## 11. Error Handling & Reliability
+
+- Graceful handling of webcam or pose detection failures.
+- Retry mechanisms for AI service calls.
+- Centralized logging and monitoring.
+
+---
+
+## 12. Design Constraints
+
+- Web-based execution limits real-time processing; system focuses on post-session analysis.
+- Initial system supports a limited set of exercises.
+- AI predictions assist but do not replace medical expertise (assistive AI).
+
+---
+
+## 13. Estimated Implementation Cost
+
+- **Development Cost:** Minimal (student / in-house development using open-source tools)
+- **Cloud Infrastructure:** ~3,000 -- 6,000 INR per month (basic compute, storage, APIs)
+- **AI Model Training & Testing:** ~2,000 -- 5,000 INR (one-time, cloud compute usage)
+- **Total Estimated Cost:** ~5,000 -- 15,000 INR for prototype and early-stage deployment
+
+---
+
+## 14. Future Enhancements
+
+- Real-time corrective feedback.
+- Transformer-based temporal models.
+- Wearable sensor integration.
+- Mobile application support.
+
+---
+
+## 15. Conclusion
+
+This design outlines a scalable, secure, and modular architecture for an AI-powered physiotherapy system built on AWS that leverages pose estimation (MoveNet) and deep learning (LSTM) to enhance remote rehabilitation. The system supports physiotherapists rather than replacing them, providing objective performance scoring and automated doctor-centric reporting while making physiotherapy more accessible and affordable using just a basic camera-enabled device.

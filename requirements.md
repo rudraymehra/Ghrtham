@@ -1,193 +1,222 @@
-# AI-Powered Physiotherapy Web Application – Requirements Document
+# AI-Powered Physiotherapy Web Application -- Requirements Document
+
+**Team Name:** Ghrtham
+**Team Leader:** Rudray Mehra
+**Hackathon:** AI for Bharat Hackathon (Powered by AWS)
+**Problem Statement:** Design an AI solution that improves efficiency, understanding, or support within healthcare or life-sciences ecosystems.
+
+---
 
 ## 1. Project Overview
 
-The healthcare industry faces a significant gap in physiotherapy access due to increasing patient volume and limited availability of physiotherapists. This project proposes an AI-powered physiotherapy web application that enables patients to perform prescribed physiotherapy exercises remotely using a webcam, with a **browser-first, production-grade AI stack**.
+The healthcare industry faces a significant gap in physiotherapy access due to increasing patient volume and limited availability of physiotherapists. This project proposes an AI-powered physiotherapy web application that enables patients to perform prescribed physiotherapy exercises remotely using a standard webcam. The system uses computer vision and deep learning to analyze a patient's body posture and movements during an exercise session.
 
-The system leverages real-time pose estimation in the browser (e.g., MoveNet via TensorFlow.js) and temporal deep learning models (e.g., Temporal Convolutional Networks, TCNs) to analyze patient movements post-session, evaluate exercise quality, and generate detailed performance summaries for physiotherapists. This reduces the need for constant supervision while ensuring accurate monitoring and progress tracking.
+Instead of requiring real-time supervision, the platform performs **post-session analysis**, where body pose data is processed using a temporal neural network (LSTM) to classify exercises, evaluate execution quality, detect common posture errors, and generate a performance score. A detailed summary report is then shared with the physiotherapist, allowing them to monitor progress and intervene only when necessary.
 
-The initial clinical focus is **post-surgical joint replacement (TKA/THA) and general orthopedic rehabilitation**, where standardized protocols and clear range-of-motion targets make pose-based assessment highly effective.
+This approach helps bridge the gap between the growing number of physiotherapy patients and limited healthcare professionals, improving accessibility, scalability, and consistency in rehabilitation care while maintaining medical oversight.
 
 ---
 
-## 2. Objectives
+## 2. How It Solves the Problem
+
+- Allows physiotherapists to track multiple patients remotely, reducing the need for frequent in-person visits.
+- Helps patients perform exercises correctly by identifying posture mistakes and risky movements.
+- Shows clear progress over time, helping doctors make better treatment decisions.
+- Makes physiotherapy more accessible and affordable using just a basic camera-enabled device, especially for patients in smaller cities.
+
+---
+
+## 3. Objectives
 
 - Enable patients to perform physiotherapy sessions remotely using a web browser.
-- Analyze patient posture and movement using AI-based pose estimation running directly in the browser.
-- Classify physiotherapy exercises over time using temporal sequence models and score execution quality (repetitions, range of motion, form).
+- Analyze patient posture and movement using AI-based pose estimation (TensorFlow.js + MoveNet) running directly in the browser.
+- Classify physiotherapy exercises and score execution quality using LSTM-based post-session analysis.
 - Generate automated post-session reports for doctors.
 - Reduce dependency on real-time physiotherapist supervision.
 - Improve accessibility, scalability, and consistency in physiotherapy care.
-- Ensure the system is designed for healthcare-grade security, privacy, and interoperability (HIPAA-ready, FHIR-ready design).
+- Provide an assistive AI that supports physiotherapists rather than replacing them.
 
 ---
 
-## 3. Target Users
+## 4. Target Users
 
-### 3.1 Patients
-- Perform physiotherapy exercises at home.
-- Receive guided exercise instructions.
-- View session summaries and progress over time.
+### 4.1 Patients
+- Perform physiotherapy exercises at home using any webcam-enabled device.
+- Follow guided exercise videos.
+- View summarised feedback, recovery trends, and session history.
 
-### 3.2 Physiotherapists / Doctors
-- Review post-session reports.
+### 4.2 Physiotherapists / Doctors
+- Review detailed post-session reports and progress analytics.
 - Monitor patient progress remotely.
-- Identify incorrect movements or deterioration.
+- Receive red-flag alerts for risky or poor performance to prioritise critical cases.
 
-### 3.3 System Administrators
+### 4.3 System Administrators
 - Manage users and roles.
 - Maintain system configurations and models.
 
 ---
 
-## 4. Functional Requirements
+## 5. Functional Requirements
 
-### 4.1 User Authentication & Authorization
+### 5.1 User Authentication & Authorization
 - User registration and login.
 - Role-based access control (Patient, Doctor, Admin).
-- Secure session management using JWT.
+- Secure authentication using **AWS Cognito + JWT + HTTPS**.
 
 ---
 
-### 4.2 Physiotherapy Session Management
-- Ability for patients to start and end a physiotherapy session.
-- Webcam access through browser for session recording.
-- Display of exercise instructions via video or animations.
+### 5.2 Remote Guided Physiotherapy Sessions
+- Patients can perform prescribed exercises at home using any webcam-enabled device.
+- Guided videos help ensure correct execution while removing the need for frequent clinic visits.
+- Webcam access through browser using **WebRTC**.
 - Capture pose data during the exercise session.
 
 ---
 
-### 4.3 Pose Estimation & Data Capture
-- Extract human body keypoints from webcam video using a pose estimation model.
-- Store extracted pose data instead of raw video by default to preserve privacy.
-- Capture temporal pose sequences for the entire exercise session.
+### 5.3 AI-Based Posture & Movement Analysis
+- Extract human body keypoints from webcam video using **TensorFlow.js + MoveNet** directly in the browser.
+- Computer vision extracts body pose data during sessions.
+- Deep learning models (LSTM) analyse full exercise sequences to detect posture errors, evaluate movement quality, and generate performance scores.
+- Store extracted pose data for post-session processing.
 
 ---
 
-### 4.4 AI-Based Exercise Analysis
-- Classify the performed exercise using a trained deep learning model.
-- Evaluate correctness and quality of movements.
-- Score exercises based on posture accuracy, consistency, range of motion, and adherence to prescribed protocols.
-- Detect common errors in exercise execution and unsafe movements.
-- Count repetitions using angle-based state machines per exercise.
+### 5.4 Post-Session Analysis
+- Perform analysis after session completion (non-real-time / post-session).
+- Body pose data processed using LSTM model on **AWS SageMaker**.
+- Classify exercises, evaluate execution quality, detect common posture errors.
+- Generate a performance score.
 
 ---
 
-### 4.5 Post-Session Analysis
-- Perform analysis after session completion (non-real-time).
-- Aggregate frame-level predictions into session-level metrics.
-- Identify trends such as fatigue or improvement across sessions (e.g., ROM progression, adherence, pain vs. performance).
+### 5.5 Patient Progress Tracking Dashboard
+- Patients can view summarised feedback, recovery trends, and session history.
+- Helps patients stay motivated and consistent throughout their rehabilitation journey.
 
 ---
 
-### 4.6 Report Generation
+### 5.6 Clinician Dashboard with Automated Reports & Risk Alerts
+- Physiotherapists receive detailed session reports and progress analytics.
+- Red-flag alerts for risky or poor performance.
+- Allows clinicians to prioritise critical cases and intervene only when necessary.
+- Track patient improvement over time.
+
+---
+
+### 5.7 Report Generation
 - Automatically generate a structured post-session report.
 - Include:
   - Exercise name
   - Performance score
-  - Detected errors
+  - Detected posture errors
   - Improvement suggestions
-- Provide reports to doctors via a dashboard.
-- Allow patients to view summarized feedback.
+- Reports shared with physiotherapist via clinician dashboard.
+- Patients can view summarised feedback.
 
 ---
 
-### 4.7 Doctor Dashboard
-- View patient session history.
-- Access detailed reports and analytics.
-- Track patient improvement over time.
-- Flag sessions requiring medical attention.
-
----
-
-### 4.8 Notifications
+### 5.8 Notifications
 - Notify doctors when a session is completed.
-- Alert doctors if performance scores fall below a threshold.
+- Alert doctors if performance scores fall below a threshold (red-flag alerts).
 
 ---
 
-## 5. Non-Functional Requirements
+## 6. Non-Functional Requirements
 
-### 5.1 Performance
+### 6.1 Performance
 - Post-session analysis should complete within acceptable time limits.
 - System should support multiple concurrent users.
-- Browser-side pose estimation and basic feedback should run in real time on commodity hardware without blocking the UI.
+- Browser-side pose estimation should run on commodity hardware without blocking the UI.
 
 ---
 
-### 5.2 Scalability
-- Modular architecture to allow independent scaling of AI services.
+### 6.2 Scalability
+- Built on **AWS** for reliable storage, model inference, and user management.
+- Seamless scalability as user volume grows.
 - Support onboarding of new exercises and models.
-- Support scaling to multiple clinics and therapists, with separation of organization data.
+- Scalable and cost-effective solution for large patient populations.
 
 ---
 
-### 5.3 Security
-- Encrypted communication (HTTPS).
-- Secure storage of sensitive health data.
-- Compliance with healthcare data privacy principles (e.g., HIPAA-ready architecture where applicable).
-- Explicit patient consent for video or data usage.
-- Fine-grained access control and audit logging for all access to patient data.
+### 6.3 Security
+- Encrypted communication using **HTTPS**.
+- Authentication via **AWS Cognito + JWT**.
+- Secure **role-based access** for doctors and patients.
+- Secure data handling and storage.
 
 ---
 
-### 5.4 Reliability
+### 6.4 Reliability
 - Fault-tolerant backend services.
 - Graceful handling of webcam or network failures.
 
 ---
 
-### 5.5 Usability
+### 6.5 Usability
 - Simple and intuitive UI for patients with minimal technical knowledge.
-- Clear visual feedback and instructions.
+- Clear visual feedback and guided exercise instructions.
 - Accessible on modern browsers without additional installations.
+- Works with just a basic camera-enabled device.
 
 ---
 
-## 6. Technical Requirements
+## 7. Technical Requirements
 
-### 6.1 Frontend
-- Web-based application using a modern React framework (e.g., Next.js with App Router).
-- Webcam access using browser APIs.
-- Pose estimation using JavaScript-based ML libraries (e.g., TensorFlow.js with MoveNet Thunder/Lightning).
-- Temporal feature extraction and basic exercise logic (rep counting, ROM estimation) running in the browser, optionally using Web Workers to avoid blocking the UI.
-- Interactive dashboards for patients and doctors (progress, adherence, outcomes).
+### 7.1 Frontend
+- **React.js + WebRTC** -- for browser-based guided physiotherapy sessions using webcam access.
 
 ---
 
-### 6.2 Backend
-- REST-based API architecture (e.g., FastAPI).
-- Secure authentication and authorization (JWT-based sessions, role-based access control).
-- Session, report, and user management services.
-- Background processing for heavier analytics or aggregation (e.g., Celery/RQ with Redis or equivalent).
+### 7.2 Pose Estimation
+- **TensorFlow.js + MoveNet** -- to extract body keypoints directly in the browser.
 
 ---
 
-### 6.3 Machine Learning
-- Pose estimation model for feature extraction (e.g., MoveNet via TensorFlow.js in the browser).
-- Custom-trained temporal deep learning model (e.g., Temporal Convolutional Network, TCN) for movement analysis and exercise classification.
-- Rule-based and/or DTW-style scoring components for detailed form and quality assessment.
-- Model versioning and retraining capability, with the ability to introduce new exercises and update models safely.
+### 7.3 AI / ML
+- **Python + PyTorch/TensorFlow** (LSTM models on **AWS SageMaker**) -- for session-level posture analysis and performance scoring.
 
 ---
 
-### 6.4 Data Storage
-- Store pose keypoints (or derived features), session metadata, and reports (e.g., in PostgreSQL with JSON/JSONB support).
-- Optional secure storage for raw videos when required, using encrypted object storage and strict access controls.
-- Support for storing aggregated metrics and selected keyframes rather than full raw sequences where appropriate, to balance fidelity and storage costs.
+### 7.4 Backend APIs
+- **Spring Boot** deployed on **AWS EC2 / ECS** -- handles authentication, session management, and report generation.
 
 ---
 
-## 7. Assumptions & Constraints
+### 7.5 Storage & Database
+- **Amazon S3** for pose/session data.
+- **Amazon RDS (PostgreSQL)** for user and medical records.
+
+---
+
+### 7.6 Authentication & Security
+- **AWS Cognito + JWT + HTTPS** -- secure role-based access for doctors and patients.
+
+---
+
+### 7.7 Deployment & Scaling
+- **Docker + AWS (ECS/EC2)** -- enabling scalable inference and application hosting.
+
+---
+
+## 8. Estimated Implementation Cost
+
+- **Development Cost:** Minimal (student / in-house development using open-source tools)
+- **Cloud Infrastructure:** ~3,000 -- 6,000 INR per month (basic compute, storage, APIs)
+- **AI Model Training & Testing:** ~2,000 -- 5,000 INR (one-time, cloud compute usage)
+- **Total Estimated Cost:** ~5,000 -- 15,000 INR for prototype and early-stage deployment
+
+---
+
+## 9. Assumptions & Constraints
 
 - Users have access to a webcam-enabled device.
 - Internet connectivity is required to upload session data.
 - Initial system supports a limited set of physiotherapy exercises.
-- AI predictions assist doctors but do not replace medical judgment.
+- AI predictions assist doctors but do not replace medical judgment (assistive AI).
 
 ---
 
-## 8. Future Enhancements
+## 10. Future Enhancements
 
 - Real-time feedback during exercises.
 - Support for wearable sensor integration.
@@ -197,6 +226,6 @@ The initial clinical focus is **post-surgical joint replacement (TKA/THA) and ge
 
 ---
 
-## 9. Conclusion
+## 11. Conclusion
 
-This system aims to bridge the gap between patients and physiotherapists by leveraging AI-based pose analysis and deep learning. The solution improves accessibility, reduces workload on healthcare professionals, and enables data-driven physiotherapy monitoring in a scalable and secure manner.
+This system aims to bridge the gap between patients and physiotherapists by leveraging AI-based pose analysis (MoveNet) and deep learning (LSTM) built on AWS. The solution improves accessibility, reduces workload on healthcare professionals, and enables data-driven physiotherapy monitoring in a scalable, secure, and cost-effective manner -- making physiotherapy accessible using just a basic camera-enabled device, especially for patients in smaller cities.
